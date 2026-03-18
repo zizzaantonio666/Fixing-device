@@ -603,6 +603,8 @@ async function sendMessage() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-api-key': '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',
+        'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
@@ -613,10 +615,31 @@ async function sendMessage() {
       })
     });
 
-    const data = await response.json();
+    const rawText = await response.text();
+    console.log('API status:', response.status);
+    console.log('API response:', rawText);
+
+    if (!response.ok) {
+      throw new Error(`API error ${response.status}: ${rawText}`);
+    }
+
+    const data = JSON.parse(rawText);
     const raw = data.content?.map(b => b.text || '').join('') || '';
     const clean = raw.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(clean);
+
+    let parsed;
+    try {
+      parsed = JSON.parse(clean);
+    } catch(e) {
+      // Se il JSON non è valido, costruiamo una risposta di fallback con ricerca diretta
+      const queries = [
+        text + ' disassembly tutorial',
+        text + ' repair guide',
+        text + ' how to fix',
+        text + ' step by step'
+      ];
+      parsed = { consiglio: 'Ecco i video tutorial trovati per la tua ricerca.', queries };
+    }
 
     loadingEl.remove();
 
@@ -629,7 +652,8 @@ async function sendMessage() {
 
   } catch (err) {
     loadingEl.remove();
-    addMessage('ai', `<p>⚠️ Errore. Riprova tra un momento.<br><small style="color:var(--muted)">${err.message}</small></p>`);
+    console.error('DeviceFix error:', err);
+    addMessage('ai', `<p>⚠️ Errore: ${err.message}<br><small style="color:var(--muted)">Controlla la console (F12) per dettagli.</small></p>`);
   }
 
   btn.disabled = false;
