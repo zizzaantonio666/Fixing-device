@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>DeviceFix — Assistente Riparazione</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1db864">
+
+<!-- iOS Safari PWA -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DeviceFix">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<!-- Android / general -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="Assistente riparazione stampanti, laptop e PC business — trova video tutorial YouTube">
+
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #141414;
+    --card: #1a1a1a;
+    --border: #2a2a2a;
+    --accent: #ff4d00;
+    --accent2: #ffb300;
+    --text: #f0ede8;
+    --muted: #666;
+    --radius: 4px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 10;
+  }
+
+  .logo-icon {
+    width: 36px; height: 36px;
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo-icon::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: #1db864;
+  }
+  .logo-icon span {
+    position: relative;
+    z-index: 1;
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  header h1 { font-size: 1.2rem; font-weight: 800; letter-spacing: -0.5px; color: #ffffff; }
+  header h1 span { color: #1db864; }
+
+  .tag {
+    margin-left: auto;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 3px 8px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    max-width: 820px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 28px 20px;
+    gap: 20px;
+  }
+
+  /* ── CATEGORY SELECTOR ── */
+  .cat-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+
+  @media (max-width: 600px) {
+    .cat-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .cat-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 14px 10px 12px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    text-align: center;
+  }
+
+  .cat-btn .cat-icon { font-size: 22px; }
+  .cat-btn .cat-name { font-size: 0.75rem; font-weight: 700; }
+  .cat-btn .cat-brands { font-size: 0.62rem; color: var(--muted); font-family: 'Space Mono', monospace; }
+
+  .cat-btn:hover { border-color: #555; background: #1f1f1f; }
+  .cat-btn.active {
+    border-color: var(--accent);
+    background: #1e0e06;
+  }
+  .cat-btn.active .cat-name { color: var(--accent); }
+
+  /* ── BRAND CHIPS (solo per PC) ── */
+  .brand-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .brand-chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    font-size: 0.72rem;
+    padding: 5px 12px;
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    transition: all 0.15s;
+    color: #aaa;
+  }
+  .brand-chip:hover { border-color: var(--accent); color: var(--text); }
+  .brand-chip.active { border-color: var(--accent); color: var(--accent); background: #1e0e06; }
+
+  /* ── CHAT ── */
+  .chat-box {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .message {
+    display: flex;
+    gap: 12px;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .message.user { flex-direction: row-reverse; }
+
+  .avatar {
+    width: 34px; height: 34px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .avatar.ai { background: var(--accent); color: #000; }
+  .avatar.user { background: var(--border); color: var(--text); }
+
+  .bubble {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 13px 16px;
+    font-size: 0.86rem;
+    line-height: 1.7;
+    max-width: 87%;
+  }
+
+  .message.user .bubble { background: #1e1a17; border-color: #3a2a1a; }
+  .bubble p { margin-bottom: 8px; }
+  .bubble p:last-child { margin-bottom: 0; }
+
+  .video-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  @media (max-width: 500px) { .video-grid { grid-template-columns: 1fr; } }
+
+  .video-card {
+    border: 1px solid var(--border);
+    overflow: hidden;
+    background: var(--surface);
+    cursor: pointer;
+    transition: border-color 0.2s;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+  }
+  .video-card:hover { border-color: var(--accent); }
+
+  .video-thumb-placeholder {
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: #111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+  }
+
+  .video-info { padding: 9px 11px; }
+  .video-title {
+    font-size: 0.76rem;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: 3px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .video-meta { font-family: 'Space Mono', monospace; font-size: 0.62rem; color: var(--muted); }
+  .yt-badge {
+    display: inline-block;
+    background: #ff0000;
+    color: #fff;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.58rem;
+    padding: 2px 5px;
+    margin-bottom: 6px;
+  }
+
+  /* ── INPUT ── */
+  .input-area {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: sticky;
+    bottom: 0;
+    background: var(--bg);
+    padding: 14px 0 8px;
+    border-top: 1px solid var(--border);
+  }
+
+  .input-row { display: flex; gap: 10px; }
+
+  textarea {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.86rem;
+    padding: 11px 14px;
+    resize: none;
+    height: 76px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  textarea::placeholder { color: var(--muted); }
+  textarea:focus { border-color: var(--accent); }
+
+  button.send-btn {
+    background: #1db864;
+    color: #fff;
+    border: none;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 0 18px;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+  }
+  button.send-btn:hover { background: #17a356; }
+  button.send-btn:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
+
+  .hint { font-family: 'Space Mono', monospace; font-size: 0.62rem; color: var(--muted); }
+
+  /* quick chips */
+  .chips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    font-size: 0.7rem;
+    padding: 4px 10px;
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    transition: all 0.15s;
+    color: #aaa;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--text); }
+
+  .loading-dots span {
+    display: inline-block;
+    animation: blink 1.2s infinite;
+    font-size: 1.1rem;
+  }
+  .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes blink { 0%,80%,100%{opacity:0} 40%{opacity:1} }
+
+  .divider {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-icon"><span>🔧</span></div>
+  <h1>Device<span>Fix</span></h1>
+  <div class="tag">v2.0 · IT</div>
+</header>
+
+<main>
+
+  <!-- CATEGORY -->
+  <div>
+    <div class="cat-label">Seleziona categoria dispositivo</div>
+    <div class="cat-grid" id="catGrid">
+      <button class="cat-btn active" data-cat="printer" onclick="selectCat(this)">
+        <span class="cat-icon">🖨️</span>
+        <span class="cat-name">Stampante</span>
+        <span class="cat-brands">HP · Epson · Canon · Brother</span>
+      </button>
+      <button class="cat-btn" data-cat="laptop" onclick="selectCat(this)">
+        <span class="cat-icon">💻</span>
+        <span class="cat-name">Laptop Business</span>
+        <span class="cat-brands">Lenovo ThinkPad · HP EliteBook</span>
+      </button>
+      <button class="cat-btn" data-cat="desktop" onclick="selectCat(this)">
+        <span class="cat-icon">🖥️</span>
+        <span class="cat-name">Desktop Business</span>
+        <span class="cat-brands">Lenovo ThinkCentre · HP ProDesk</span>
+      </button>
+      <button class="cat-btn" data-cat="workstation" onclick="selectCat(this)">
+        <span class="cat-icon">⚙️</span>
+        <span class="cat-name">Workstation</span>
+        <span class="cat-brands">Lenovo ThinkStation · HP Z-Series</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- BRAND ROW (visibile solo per PC) -->
+  <div id="brandSection" style="display:none">
+    <div class="cat-label" style="margin-bottom:8px">Brand</div>
+    <div class="brand-row" id="brandRow"></div>
+  </div>
+
+  <!-- QUICK CHIPS -->
+  <div>
+    <div class="cat-label" style="margin-bottom:8px">Esempi rapidi</div>
+    <div class="chips" id="quickChips"></div>
+  </div>
+
+  <!-- CHAT -->
+  <div class="chat-box" id="chatBox">
+    <div class="message">
+      <div class="avatar ai">AI</div>
+      <div class="bubble" id="welcomeBubble">
+        <p>Ciao! 👋 Seleziona una categoria qui sopra, poi descrivi il modello e la parte che vuoi smontare o riparare.</p>
+        <p><em>Es: "HP OfficeJet 8015 — testina di stampa"</em></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- INPUT -->
+  <div class="input-area">
+    <div class="input-row">
+      <textarea id="userInput" placeholder="Es: Lenovo ThinkPad X1 Carbon — tastiera da smontare..." onkeydown="handleKey(event)"></textarea>
+      <button class="send-btn" id="sendBtn" onclick="sendMessage()">Cerca<br>Video →</button>
+    </div>
+    <div class="hint">↵ Invio per mandare · Shift+Invio per andare a capo</div>
+  </div>
+
+</main>
+
+<script>
+const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
+
+const categories = {
+  printer: {
+    label: "Stampante",
+    placeholder: "Es: HP LaserJet Pro M15w — fusore da smontare...",
+    welcome: 'Categoria: <strong>Stampante</strong>. Dimmi modello e parte da smontare.<br><em>Es: "Epson L3150 — rullo carta inceppato"</em>',
+    brands: [],
+    chips: [
+      { label: "HP — testina", text: "HP DeskJet 2710, testina di stampa" },
+      { label: "Epson — rullo", text: "Epson EcoTank L3150, rullo carta" },
+      { label: "Canon — coperchio", text: "Canon PIXMA MG3650, coperchio superiore" },
+      { label: "Brother — fusore", text: "Brother HL-L2350DW, fusore" },
+    ],
+    system: `Sei un esperto tecnico di stampanti. L'utente descrive il modello e la parte da smontare/riparare.
+Rispondi SOLO in questo formato JSON, nessun testo fuori:
+{"consiglio":"breve testo in italiano (2-3 righe) con consigli tecnici per questa specifica operazione","queries":["query youtube 1","query youtube 2","query youtube 3","query youtube 4"]}
+Le queries devono essere in inglese, specifiche per modello e parte. Es: "HP DeskJet 2710 printhead removal tutorial".`
+  },
+  laptop: {
+    label: "Laptop Business",
+    placeholder: "Es: Lenovo ThinkPad T14 Gen 3 — RAM upgrade...",
+    welcome: 'Categoria: <strong>Laptop Business</strong>. Specifica marca, modello e parte.<br><em>Es: "Lenovo ThinkPad X1 Carbon Gen 10 — sostituzione tastiera"</em>',
+    brands: ["Lenovo ThinkPad", "HP EliteBook", "HP ProBook", "HP ZBook"],
+    chips: [
+      { label: "ThinkPad — tastiera", text: "Lenovo ThinkPad T14 Gen 3, sostituzione tastiera" },
+      { label: "ThinkPad — RAM", text: "Lenovo ThinkPad X1 Carbon, upgrade RAM" },
+      { label: "EliteBook — batteria", text: "HP EliteBook 840 G9, sostituzione batteria" },
+      { label: "EliteBook — SSD", text: "HP EliteBook 850 G8, sostituzione SSD NVMe" },
+      { label: "ThinkPad — display", text: "Lenovo ThinkPad L15, smontaggio schermo" },
+      { label: "ZBook — ventola", text: "HP ZBook Fury 15 G8, pulizia ventola" },
+    ],
+    system: `Sei un esperto tecnico di laptop business Lenovo e HP. L'utente descrive modello e operazione da eseguire.
+Rispondi SOLO in questo formato JSON, nessun testo fuori:
+{"consiglio":"breve testo in italiano (2-3 righe) con consigli tecnici specifici per questo laptop e questa operazione, includi avvertenze su garanzia o difficoltà","queries":["query youtube 1","query youtube 2","query youtube 3","query youtube 4"]}
+Le queries devono essere in inglese, molto specifiche per modello. Es: "Lenovo ThinkPad X1 Carbon Gen 10 keyboard replacement", "HP EliteBook 840 G9 battery removal disassembly".`
+  },
+  desktop: {
+    label: "Desktop Business",
+    placeholder: "Es: Lenovo ThinkCentre M920q — sostituzione SSD...",
+    welcome: 'Categoria: <strong>Desktop Business</strong>. Specifica marca, modello e componente.<br><em>Es: "HP ProDesk 600 G6 — upgrade RAM DDR4"</em>',
+    brands: ["Lenovo ThinkCentre", "HP ProDesk", "HP EliteDesk", "Lenovo IdeaCentre"],
+    chips: [
+      { label: "ThinkCentre — RAM", text: "Lenovo ThinkCentre M920q, upgrade RAM" },
+      { label: "ThinkCentre — SSD", text: "Lenovo ThinkCentre M720 Tower, sostituzione SSD" },
+      { label: "ProDesk — CPU", text: "HP ProDesk 600 G6, sostituzione processore" },
+      { label: "EliteDesk — GPU", text: "HP EliteDesk 800 G6, installazione scheda video" },
+    ],
+    system: `Sei un esperto tecnico di desktop business Lenovo e HP. L'utente descrive modello e operazione.
+Rispondi SOLO in questo formato JSON, nessun testo fuori:
+{"consiglio":"breve testo in italiano (2-3 righe) con consigli tecnici specifici, includi info su compatibilità componenti e difficoltà operazione","queries":["query youtube 1","query youtube 2","query youtube 3","query youtube 4"]}
+Le queries devono essere in inglese, specifiche. Es: "Lenovo ThinkCentre M920q SSD upgrade disassembly", "HP ProDesk 600 G6 RAM upgrade tutorial".`
+  },
+  workstation: {
+    label: "Workstation",
+    placeholder: "Es: HP Z4 G4 — installazione scheda grafica Quadro...",
+    welcome: 'Categoria: <strong>Workstation</strong>. Specifica marca, modello e componente.<br><em>Es: "Lenovo ThinkStation P620 — upgrade CPU Threadripper"</em>',
+    brands: ["Lenovo ThinkStation", "HP Z2", "HP Z4", "HP Z6", "HP Z8"],
+    chips: [
+      { label: "ThinkStation — GPU", text: "Lenovo ThinkStation P620, installazione GPU professionale" },
+      { label: "HP Z4 — RAM ECC", text: "HP Z4 G4, upgrade RAM ECC" },
+      { label: "HP Z6 — CPU", text: "HP Z6 G4, sostituzione processore Xeon" },
+      { label: "ThinkStation — storage", text: "Lenovo ThinkStation P520, aggiunta NVMe storage" },
+    ],
+    system: `Sei un esperto tecnico di workstation professionali Lenovo e HP. L'utente descrive modello e operazione.
+Rispondi SOLO in questo formato JSON, nessun testo fuori:
+{"consiglio":"breve testo in italiano (2-3 righe) con consigli tecnici avanzati per questa workstation, includi avvertenze su ECC, compatibilità Xeon/Threadripper e procedure specifiche","queries":["query youtube 1","query youtube 2","query youtube 3","query youtube 4"]}
+Le queries devono essere in inglese, molto specifiche. Es: "Lenovo ThinkStation P620 GPU upgrade disassembly", "HP Z4 G4 RAM ECC installation tutorial".`
+  }
+};
+
+let currentCat = "printer";
+let selectedBrand = null;
+
+function selectCat(btn) {
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentCat = btn.dataset.cat;
+  selectedBrand = null;
+  updateUI();
+}
+
+function updateUI() {
+  const cat = categories[currentCat];
+
+  // placeholder
+  document.getElementById('userInput').placeholder = cat.placeholder;
+
+  // welcome bubble
+  document.getElementById('welcomeBubble').innerHTML = `<p>${cat.welcome}</p>`;
+
+  // brand section
+  const brandSec = document.getElementById('brandSection');
+  const brandRow = document.getElementById('brandRow');
+  if (cat.brands.length > 0) {
+    brandSec.style.display = 'block';
+    brandRow.innerHTML = cat.brands.map(b =>
+      `<div class="brand-chip" onclick="selectBrand(this,'${b}')">${b}</div>`
+    ).join('');
+  } else {
+    brandSec.style.display = 'none';
+    brandRow.innerHTML = '';
+  }
+
+  // chips
+  const chipsEl = document.getElementById('quickChips');
+  chipsEl.innerHTML = cat.chips.map(c =>
+    `<div class="chip" onclick="fillChip('${c.text}')">${c.label}</div>`
+  ).join('');
+}
+
+function selectBrand(el, brand) {
+  document.querySelectorAll('.brand-chip').forEach(b => b.classList.remove('active'));
+  if (selectedBrand === brand) {
+    selectedBrand = null;
+  } else {
+    el.classList.add('active');
+    selectedBrand = brand;
+    const input = document.getElementById('userInput');
+    if (!input.value.trim()) input.value = brand + ', ';
+    input.focus();
+  }
+}
+
+function fillChip(text) {
+  document.getElementById('userInput').value = text;
+  document.getElementById('userInput').focus();
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function addMessage(role, html) {
+  const box = document.getElementById('chatBox');
+  const div = document.createElement('div');
+  div.className = `message ${role}`;
+  div.innerHTML = `<div class="avatar ${role}">${role === 'user' ? 'TU' : 'AI'}</div><div class="bubble">${html}</div>`;
+  box.appendChild(div);
+  div.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  return div;
+}
+
+function addLoading() {
+  return addMessage('ai', '<div class="loading-dots"><span>●</span><span>●</span><span>●</span></div>');
+}
+
+function buildVideoCards(queries) {
+  const icons = { printer: '🖨️', laptop: '💻', desktop: '🖥️', workstation: '⚙️' };
+  return queries.map(q => {
+    const url = `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
+    return `<a class="video-card" href="${url}" target="_blank" rel="noopener">
+      <div class="video-thumb-placeholder">${icons[currentCat] || '▶️'}</div>
+      <div class="video-info">
+        <div class="yt-badge">YouTube</div>
+        <div class="video-title">${q}</div>
+        <div class="video-meta">Cerca su YouTube →</div>
+      </div>
+    </a>`;
+  }).join('');
+}
+
+async function sendMessage() {
+  const input = document.getElementById('userInput');
+  const btn = document.getElementById('sendBtn');
+  const text = input.value.trim();
+  if (!text) return;
+
+  const cat = categories[currentCat];
+  const catLabel = cat.label;
+
+  input.value = '';
+  btn.disabled = true;
+
+  addMessage('user', `<p><span style="font-family:'Space Mono',monospace;font-size:0.65rem;color:var(--muted);display:block;margin-bottom:4px">[${catLabel}]</span>${text.replace(/\n/g,'<br>')}</p>`);
+
+  const loadingEl = addLoading();
+
+  try {
+    const response = await fetch(ANTHROPIC_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: cat.system,
+        messages: [{ role: 'user', content: text }]
+      })
+    });
+
+    const data = await response.json();
+    const raw = data.content?.map(b => b.text || '').join('') || '';
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+
+    loadingEl.remove();
+
+    addMessage('ai', `
+      <p>${parsed.consiglio}</p>
+      <div class="yt-badge" style="margin-top:10px">VIDEO TUTORIAL</div>
+      <div class="video-grid">${buildVideoCards(parsed.queries)}</div>
+      <p style="margin-top:10px;font-size:0.75rem;color:var(--muted);">Clicca per aprire la ricerca YouTube →</p>
+    `);
+
+  } catch (err) {
+    loadingEl.remove();
+    addMessage('ai', `<p>⚠️ Errore. Riprova tra un momento.<br><small style="color:var(--muted)">${err.message}</small></p>`);
+  }
+
+  btn.disabled = false;
+  input.focus();
+}
+
+// init
+updateUI();
+
+// PWA service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
